@@ -402,6 +402,124 @@ end
 
 LoadSigmaData()
 
+-- Toggle ESP
+local function ToggleFarts(state)
+    highlightingEnabled = state
+    local localPlayer = game.Players.LocalPlayer
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Highlight") or obj:IsA("BillboardGui") then
+            if DebugNotifications then GUI:Notification{Title = "Highlight deleted", Text = (pcall(function() return obj:GetFullName() end) and obj:GetFullName() or "Deleted"), Duration = 3} else end
+            obj:Destroy()
+        end
+    end
+    if not state then return end
+    local function AddFart(object, color)
+        if object:IsA("Model") and object ~= localPlayer.Character and not object:FindFirstChildOfClass("Highlight") then
+            local h = Instance.new("Highlight", object)
+            if DebugNotifications then GUI:Notification{Title = "Highlight added", Text  = (pcall(function() return h:GetFullName() end) and h:GetFullName() or "Deleted"), Duration = 3} else end
+            h.FillColor, h.FillTransparency, h.OutlineTransparency = color, 0.7, 0.6
+        end
+    end
+    for _, folder in ipairs({workspace.Players.Survivors, workspace.Players.Killers}) do
+        for _, obj in ipairs(folder:GetChildren()) do
+            AddFart(obj, folder.Name == "Survivors" and survivorHighlightColor or killerHighlightColor)
+            local billboard = Instance.new("BillboardGui", obj.Head)
+            billboard.Name = "FartHubBillboard"
+            billboard.Size = UDim2.new(0, 100, 0, 50)
+            billboard.StudsOffset = Vector3.new(0, 2, 0)
+            local textLabel = Instance.new("TextLabel", billboard)
+            textLabel.Size = UDim2.new(1, 0, 1, 0)
+            textLabel.Text = obj:GetAttribute("Username") and obj.Name
+            textLabel.TextColor3 = Color3.new(1, 1, 1)
+            textLabel.TextStrokeTransparency = 0
+            textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+            billboard.AlwaysOnTop = true
+            textLabel.BackgroundTransparency = 1
+        end
+        folder.ChildAdded:Connect(function(child)
+            if highlightingEnabled then
+                AddFart(child, folder.Name == "Survivors" and survivorHighlightColor or killerHighlightColor)
+                local billboard = Instance.new("BillboardGui", child.Head)
+                billboard.Name = "FartHubBillboard"
+                billboard.Size = UDim2.new(0, 100, 0, 50)
+                billboard.StudsOffset = Vector3.new(0, 2, 0)
+                local textLabel = Instance.new("TextLabel", billboard)
+                textLabel.TextColor3 = Color3.new(1, 1, 1)
+                textLabel.TextStrokeTransparency = 0
+                textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.Text = child:GetAttribute("Username") and child.Name
+                billboard.AlwaysOnTop = true
+                textLabel.BackgroundTransparency = 1
+            end
+        end)
+    end
+    local function SetupSigmaListener()
+        local ingameFolder = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame")
+        if not ingameFolder then return end
+        local mapFolder = ingameFolder:FindFirstChild("Map")
+        if not mapFolder then return end
+        for _, g in ipairs(mapFolder:GetChildren()) do
+            if g.Name == "Generator" then AddFart(g, generatorHighlightColor) end
+        end
+        mapFolder.ChildAdded:Connect(function(child)
+            if highlightingEnabled and child.Name == "Generator" then
+                AddFart(child, generatorHighlightColor)
+            end
+        end)
+    end
+    SetupSigmaListener()
+    workspace.Map.ChildAdded:Connect(function(child)
+        if highlightingEnabled then
+            SetupSigmaListener()
+        end
+    end)
+    workspace.Map.Ingame.ChildAdded:Connect(function(child)
+        if highlightingEnabled then
+            SetupSigmaListener()
+        end
+    end)
+end
+
+local function ToggleSigmaItemsHighlights(state)
+    ItemFartsEnabled = state
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Highlight") and table.find(Items, obj.Parent.Name) then
+            if DebugNotifications then GUI:Notification{Title = "Highlight deleted", Text = (pcall(function() return obj:GetFullName() end) and obj:GetFullName() or "Deleted"), Duration = 3} else end
+            task.wait(.1)
+            obj:Destroy()
+        end
+    end
+    if not state then return end
+    local function AddLopticaHighlight(object, color)
+        if object:IsA("BasePart") and object.Parent:IsA("Model") and not object:FindFirstChildOfClass("Highlight") then
+            local h = Instance.new("Highlight", object)
+            h.FillColor, h.FillTransparency, h.OutlineTransparency = color, 0.7, 0.6
+            if DebugNotifications then GUI:Notification{Title = "Highlight added", Text = (pcall(function() return h:GetFullName() end) and h:GetFullName() or "Added"), Duration = 3} else end
+        end
+    end
+    for _, item in ipairs(Items) do
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") and obj.Name == item then
+                for _, child in ipairs(obj:GetChildren()) do
+                    if child:IsA("BasePart") then
+                        AddLopticaHighlight(child, itemHighlightColor)
+                    end
+                end
+            end
+        end
+    end
+    workspace.DescendantAdded:Connect(function(descendant)
+        if ItemFartsEnabled and descendant:IsA("Model") and table.find(Items, descendant.Name) then
+            for _, child in ipairs(descendant:GetChildren()) do
+                if child:IsA("BasePart") then
+                    AddLopticaHighlight(child, itemHighlightColor)
+                end
+            end
+        end
+    end)
+end
+
 
 
 local function Do1x1x1x1Popups()
@@ -613,10 +731,55 @@ local function SetProximity()
     end
 end
 
+local function ToggleSigmaItemsHighlights(state)
+    ItemFartsEnabled = state
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Highlight") and table.find(Items, obj.Parent.Name) then
+            if DebugNotifications then GUI:Notification{Title = "Highlight deleted", Text = (pcall(function() return obj:GetFullName() end) and obj:GetFullName() or "Deleted"), Duration = 3} else end
+            task.wait(.1)
+            obj:Destroy()
+        end
+    end
+    if not state then return end
+    local function AddLopticaHighlight(object, color)
+        if object:IsA("BasePart") and object.Parent:IsA("Model") and not object:FindFirstChildOfClass("Highlight") then
+            local h = Instance.new("Highlight", object)
+            h.FillColor, h.FillTransparency, h.OutlineTransparency = color, 0.7, 0.6
+            if DebugNotifications then GUI:Notification{Title = "Highlight added", Text = (pcall(function() return h:GetFullName() end) and h:GetFullName() or "Added"), Duration = 3} else end
+        end
+    end
+    for _, item in ipairs(Items) do
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") and obj.Name == item then
+                for _, child in ipairs(obj:GetChildren()) do
+                    if child:IsA("BasePart") then
+                        AddLopticaHighlight(child, itemHighlightColor)
+                    end
+                end
+            end
+        end
+    end
+    workspace.DescendantAdded:Connect(function(descendant)
+        if ItemFartsEnabled and descendant:IsA("Model") and table.find(Items, descendant.Name) then
+            for _, child in ipairs(descendant:GetChildren()) do
+                if child:IsA("BasePart") then
+                    AddLopticaHighlight(child, itemHighlightColor)
+                end
+            end
+        end
+    end)
+end
 
+local function UpdateFarts()
+    ToggleFarts(false)
+    ToggleFarts(true)
+    ToggleSigmaItemsHighlights(false)
+    ToggleSigmaItemsHighlights(true)
+end
 
 local function InitializeGUI()
     GeneratorTab = GUI:Tab{Name = "Generators", Icon = "rbxassetid://12549056837"}
+    VisualsTab = GUI:Tab{Name = "Visuals", Icon = "rbxassetid://129972183138590"}
     PlayerTab = GUI:Tab{Name = "Player", Icon = "rbxassetid://86412006218107"}
     BlatantTab = GUI:Tab{Name = "Blatant", Icon = "rbxassetid://17183582911"}
     MiscTab = GUI:Tab{Name = "Misc", Icon = "rbxassetid://17106470268"}
@@ -628,7 +791,33 @@ local function InitializeGUI()
     GUI:Notification{Title = "NOTE: Highlights Not Working Fix.", Text = "Reset ur bloxtrap settings.", Duration = 10}
     GUI:Notification{Title = "Made by ivannetta", Text = "Like on rbxscripts or rscripts plssssssss 🥺", Duration = 60}
 
- 
+    VisualsTab:ColorPicker{
+        Style = Mercury.ColorPickerStyles.Legacy,
+        Callback = function(color ) generatorHighlightColor = color UpdateFarts() end,
+        Name = "Generator Highlight Color",
+        Default = generatorHighlightColor
+    }
+
+    VisualsTab:ColorPicker{
+        Style = Mercury.ColorPickerStyles.Legacy,
+        Callback = function(color) survivorHighlightColor = color UpdateFarts() end,
+        Name = "Survivor Highlight Color",
+        Default = survivorHighlightColor
+    }
+
+    VisualsTab:ColorPicker{
+        Style = Mercury.ColorPickerStyles.Legacy,
+        Callback = function(color) killerHighlightColor = color UpdateFarts() end,
+        Name = "Killer Highlight Color",
+        Default = killerHighlightColor
+    }
+
+    VisualsTab:ColorPicker{
+        Style = Mercury.ColorPickerStyles.Legacy,
+        Callback = function(color) itemHighlightColor = color UpdateFarts() end,
+        Name = "Item Highlight Color",
+        Default = itemHighlightColor
+    }
 
     -- The GUI Toggle handling code
 MiscTab:Toggle{
@@ -664,7 +853,12 @@ MiscTab:Toggle{
     end
 }
 
-
+    VisualsTab:Toggle{
+        Name = "Highlight Objects",
+        Description = "Toggle highlights for objects in-game.",
+        StartingState = false,
+        Callback = function(state) ToggleFarts(state) ToggleSigmaItemsHighlights(state) end
+    }
 
     PlayerTab:Button{
         Name = "Quick Proximity Prompts",
