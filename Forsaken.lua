@@ -617,7 +617,6 @@ end
 
 local function InitializeGUI()
     GeneratorTab = GUI:Tab{Name = "Generators", Icon = "rbxassetid://12549056837"}
-    VisualsTab = GUI:Tab{Name = "Visuals", Icon = "rbxassetid://129972183138590"}
     PlayerTab = GUI:Tab{Name = "Player", Icon = "rbxassetid://86412006218107"}
     BlatantTab = GUI:Tab{Name = "Blatant", Icon = "rbxassetid://17183582911"}
     MiscTab = GUI:Tab{Name = "Misc", Icon = "rbxassetid://17106470268"}
